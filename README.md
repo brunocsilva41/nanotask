@@ -10,8 +10,13 @@
 
 <p align="center">
   <a href="https://github.com/brunocsilva41/nanotask/actions/workflows/ci.yml"><img src="https://github.com/brunocsilva41/nanotask/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
-  <a href="https://github.com/brunocsilva41/nanotask/releases"><img src="https://img.shields.io/github/v/release/brunocsilva41/nanotask" alt="Release"/></a>
+  <a href="https://github.com/brunocsilva41/nanotask/releases/latest"><img src="https://img.shields.io/github/v/release/brunocsilva41/nanotask" alt="Release"/></a>
+  <a href="https://github.com/brunocsilva41/nanotask/releases/latest"><img src="https://img.shields.io/github/downloads/brunocsilva41/nanotask/total" alt="Downloads"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/brunocsilva41/nanotask" alt="MIT"/></a>
+</p>
+
+<p align="center">
+  <img src="assets/store/screenshot-bento.png" width="720" alt="NanoTask — painel Bento"/>
 </p>
 
 ## Por que existe
