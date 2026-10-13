@@ -20,8 +20,13 @@ endif()
 # RC do MSVC: com o ambiente msvc-dev-cmd no CI, ninja usa o rc.exe correto
 add_executable(NanoTask WIN32
     src/main.cpp
-    res/version.rc
+    ${CMAKE_CURRENT_BINARY_DIR}/res/version.rc
 )
+
+# version.rc gerado: versão vem do arquivo VERSION (ou -DAPP_VERSION_* do CI).
+# configure_file elimina expansão de macro no rc.exe (fonte de falhas).
+set(CMAKE_SOURCE_DIR_FOR_RC ${CMAKE_SOURCE_DIR})
+configure_file(res/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/res/version.rc @ONLY)
 
 target_compile_definitions(NanoTask PRIVATE
     UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
