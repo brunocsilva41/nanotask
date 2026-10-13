@@ -1,0 +1,6 @@
+* text=auto
+*.ico binary
+*.bmp binary
+*.png binary
+*.exe binary
+*.zip binary
