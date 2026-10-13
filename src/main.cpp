@@ -20,6 +20,26 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR pCmdLine, int) {
     host.Configure(cfg);
     if (smoke) { host.Shutdown(); return 0; } // CI: prova init/shutdown limpos
 
+    const bool smokeUi = cmd.find(L"--smoke-ui") != std::wstring_view::npos;
+    if (smokeUi) {
+        host.OpenDashboard(); // prova criação de todos os controles
+        const DWORD mainId = ::GetCurrentThreadId();
+        std::jthread killer([mainId](std::stop_token st) {
+            for (int i = 0; i < 40 && !st.stop_requested(); ++i)
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ::PostThreadMessageW(mainId, WM_APP + 99, 0, 0);
+        });
+        MSG msg{};
+        int code = 0;
+        while (::GetMessageW(&msg, nullptr, 0, 0) > 0) {
+            if (msg.message == WM_APP + 99) { code = 0; break; }
+            ::TranslateMessage(&msg);
+            ::DispatchMessageW(&msg);
+        }
+        host.Shutdown();
+        return code;
+    }
+
     std::jthread worker([&host](std::stop_token st){ host.RunWorker(st); });
 
     int code = host.Pump();

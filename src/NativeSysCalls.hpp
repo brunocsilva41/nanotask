@@ -1,4 +1,8 @@
 #pragma once
+// Winsock2 ANTES de windows.h (via Foundation) para evitar conflito winsock.h.
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windns.h>
 #include "Foundation.hpp"
 #include <windows.h>
 #include <tlhelp32.h>
@@ -137,8 +141,23 @@ inline bool SetPriorityAndAffinity(DWORD pid, DWORD prio, DWORD_PTR mask) {
 }
 
 inline bool FlushDns() {
-    // DnsFlushResolverCache retorna BOOL no SDK atual
-    if (!::DnsFlushResolverCache()) { LogWin32Error("FlushDns"); return false; }
+    // Sem API pública de flush total: ipconfig com caminho absoluto fixo
+    // (nenhum input de usuário entra na linha de comando).
+    wchar_t sys[MAX_PATH]{};
+    if (!::GetSystemDirectoryW(sys, MAX_PATH)) { LogWin32Error("FlushDns:SysDir"); return false; }
+    std::wstring cmd = std::wstring(sys) + L"\\ipconfig.exe /flushdns";
+    STARTUPINFOW si{ sizeof(si) };
+    si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
+    PROCESS_INFORMATION pi{};
+    if (!::CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, FALSE,
+            CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
+        LogWin32Error("FlushDns:CreateProcess"); return false;
+    }
+    ::WaitForSingleObject(pi.hProcess, 15000);
+    DWORD code = 1;
+    ::GetExitCodeProcess(pi.hProcess, &code);
+    ::CloseHandle(pi.hThread); ::CloseHandle(pi.hProcess);
+    if (code != 0) { RingLog::Instance().Push(code, "FlushDns:exit!=0"); return false; }
     return true;
 }
 

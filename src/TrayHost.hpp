@@ -5,6 +5,7 @@
 #include "TempProviders.hpp"
 #include "Blackbox.hpp"
 #include "OverlayWidget.hpp"
+#include "Dashboard.hpp"
 #include "BugReport.hpp"
 #include <shellapi.h>
 #include <thread>
@@ -24,6 +25,7 @@ constexpr UINT IDM_GHOST = 102;
 constexpr UINT IDM_PINNED = 103;
 constexpr UINT IDM_REPORT = 104;
 constexpr UINT IDM_EXIT = 105;
+constexpr UINT IDM_DASH = 106;
 
 class TrayHost {
 public:
@@ -46,11 +48,16 @@ public:
         ::swprintf_s(nid.szTip, L"NanoTask — 42°C  CPU —");
         if (!::Shell_NotifyIconW(NIM_ADD, &nid)) { LogWin32Error("Shell_NotifyIcon ADD"); return false; }
         m_telem.Start(); // PDH + top PID em background; jthread joina sozinho
+        if (!::AddClipboardFormatListener(m_hwnd)) LogWin32Error("Clipboard:Listener");
         return true;
     }
 
     void Configure(const Settings& cfg) {
         m_mode = cfg.taskbarMode;
+        dashCfg_.kwhPrice = cfg.kwhPrice;
+        dashCfg_.tdpWatts = cfg.tdpWatts;
+        dashCfg_.confirmKill = cfg.confirmKill;
+        dashCfg_.protectCritical = cfg.protectCritical;
         if (cfg.widgetEnabled) m_widget.Create(m_hInst);
         else m_widget.Destroy();
     }
@@ -96,7 +103,9 @@ public:
     }
 
     void Shutdown() {
+        m_dash.Close();
         m_widget.Destroy();
+        ::RemoveClipboardFormatListener(m_hwnd);
         NOTIFYICONDATAW nid{}; nid.cbSize = sizeof(nid);
         nid.hWnd = m_hwnd; nid.uID = ID_TRAY;
         ::Shell_NotifyIconW(NIM_DELETE, &nid);
@@ -104,7 +113,39 @@ public:
         m_lastIcon = nullptr;
     }
 
+    void OpenDashboard() {
+        m_dash.Open(m_hInst, &m_box, dashCfg_, [this] {
+            std::lock_guard lk(clipMtx_);
+            return clip_;
+        });
+    }
+
+    std::vector<std::wstring> Clipboard() {
+        std::lock_guard lk(clipMtx_);
+        return clip_;
+    }
+
 private:
+    // CF_UNICODETEXT apenas; imagens/arquivos ignorados. Máx 20 itens, 4KB cada.
+    void OnClipboard() {
+        if (!::OpenClipboard(m_hwnd)) return;
+        HANDLE h = ::GetClipboardData(CF_UNICODETEXT);
+        if (h) {
+            const wchar_t* p = static_cast<const wchar_t*>(::GlobalLock(h));
+            if (p) {
+                std::wstring s(p);
+                ::GlobalUnlock(h);
+                if (s.size() > 4096) s.resize(4096);
+                if (!s.empty()) {
+                    std::lock_guard lk(clipMtx_);
+                    clip_.erase(std::remove(clip_.begin(), clip_.end(), s), clip_.end());
+                    clip_.insert(clip_.begin(), std::move(s));
+                    if (clip_.size() > 20) clip_.resize(20);
+                }
+            }
+        }
+        ::CloseClipboard();
+    }
     // Ícone 16x16 de máxima legibilidade: fundo sólido escuro + dígitos
     // grandes centralizados na cor da faixa. 2 caracteres no máximo.
     UniqueIcon MakeTempIcon(float temp) noexcept {
@@ -159,6 +200,7 @@ private:
     void ShowMenu() {
         HMENU menu = ::CreatePopupMenu();
         if (!menu) { LogWin32Error("Menu:Create"); return; }
+        ::AppendMenuW(menu, MF_STRING | MF_DEFAULT, IDM_DASH, L"Abrir painel");
         ::AppendMenuW(menu, MF_STRING | (m_widget.Visible() ? MF_CHECKED : MF_UNCHECKED), IDM_WIDGET, L"Widget flutuante");
         ::AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
         ::AppendMenuW(menu, MF_STRING | (m_mode == TaskbarMode::Ghost ? MF_CHECKED : 0), IDM_GHOST, L"Modo fantasma (só bandeja)");
@@ -185,16 +227,13 @@ private:
 
     LRESULT WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         if (m == WM_TRAY) {
-            if (LOWORD(l) == WM_LBUTTONUP) {
-                // Ação primária: alterna o widget
-                if (m_widget.Visible()) m_widget.SetVisible(false);
-                else { if (!m_widget.Create(m_hInst)) UiLauncher::Show(h); else m_widget.SetVisible(true); }
-                return 0;
-            }
+            if (LOWORD(l) == WM_LBUTTONUP) { OpenDashboard(); return 0; }
             if (LOWORD(l) == WM_RBUTTONUP) { ShowMenu(); return 0; }
         }
+        if (m == WM_CLIPBOARDUPDATE) { OnClipboard(); return 0; }
         if (m == WM_COMMAND) {
             switch (LOWORD(w)) {
+            case IDM_DASH: OpenDashboard(); break;
             case IDM_WIDGET:
                 if (m_widget.Visible()) m_widget.SetVisible(false);
                 else { m_widget.Create(m_hInst); m_widget.SetVisible(true); }
@@ -225,6 +264,10 @@ private:
     OverlayWidget m_widget{};
     Blackbox m_box{};
     TelemetryCollector m_telem{ m_box }; // depois de m_box: dtor joina o jthread antes
+    Dashboard m_dash{};
+    DashCfg dashCfg_{};
+    std::vector<std::wstring> clip_{};
+    std::mutex clipMtx_{};
 };
 
 } // namespace nt

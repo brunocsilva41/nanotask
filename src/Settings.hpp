@@ -23,6 +23,8 @@ struct Settings {
     bool confirmKill = true;
     bool protectCritical = true;
     bool widgetEnabled = true; // widget flutuante visível no boot
+    double kwhPrice = 0.85;
+    int tdpWatts = 65;
 };
 
 inline std::filesystem::path AppDataDir() {
@@ -57,6 +59,14 @@ inline Settings LoadSettings() {
     flag("\"confirmKill\"", s.confirmKill);
     flag("\"protectCritical\"", s.protectCritical);
     flag("\"widgetEnabled\"", s.widgetEnabled);
+    if (auto pos = j.find("\"kwhPrice\""); pos != std::string::npos) {
+        auto num = j.find_first_of("0123456789", pos);
+        if (num != std::string::npos) s.kwhPrice = std::stod(j.substr(num));
+    }
+    if (auto pos = j.find("\"tdpWatts\""); pos != std::string::npos) {
+        auto num = j.find_first_of("0123456789", pos);
+        if (num != std::string::npos) s.tdpWatts = std::stoi(j.substr(num));
+    }
     if (j.find("\"beta\"") != std::string::npos) s.updateChannel = L"beta";
     return s;
 }

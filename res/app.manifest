@@ -3,6 +3,14 @@
   <assemblyIdentity version="1.0.0.0" processorArchitecture="amd64"
       name="NanoTask" type="win32"/>
   <description>NanoTask — system tray monitor fantasma</description>
+  <!-- Common Controls v6: ListView/Tab/Trackbar com estilo moderno -->
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls"
+          version="6.0.0.0" processorArchitecture="amd64"
+          publicKeyToken="6595b64144ccf1df" language="*"/>
+    </dependentAssembly>
+  </dependency>
   <!-- asInvoker: o app pede elevação SOMENTE nas ações que exigem
        (StandbyList, drivers de sensor). UAC no boot mataria o modo fantasma. -->
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">

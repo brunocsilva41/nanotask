@@ -1,7 +1,6 @@
 #pragma once
-// OverlayWidget.hpp — widget flutuante estilo gadget: números grandes e claros.
-// Janela WS_POPUP (240x104) sempre no topo, sem foco, cantos arredondados,
-// redesenhada a cada 2s via PostMessage (nunca trava a Message Pump).
+// OverlayWidget.hpp — widget flutuante: números grandes e legíveis.
+// Segoe UI (cobre acentos e símbolo de grau), layout com barras, sem overflow.
 #include "Foundation.hpp"
 #include <mutex>
 
@@ -34,7 +33,7 @@ public:
             nullptr, nullptr, hInst, this);
         if (!hwnd_) { LogWin32Error("Widget:Create"); return false; }
         ::SetLayeredWindowAttributes(hwnd_, 0, opacity_, LWA_ALPHA);
-        HRGN rgn = ::CreateRoundRectRgn(0, 0, kW + 1, kH + 1, 16, 16);
+        HRGN rgn = ::CreateRoundRectRgn(0, 0, kW + 1, kH + 1, 18, 18);
         if (rgn) ::SetWindowRgn(hwnd_, rgn, TRUE); // OS assume o RGN
         ::ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
         return true;
@@ -51,19 +50,13 @@ public:
         ::ShowWindow(hwnd_, v ? SW_SHOWNOACTIVATE : SW_HIDE);
     }
 
-    void SetOpacity(BYTE o) {
-        opacity_ = o;
-        if (hwnd_) ::SetLayeredWindowAttributes(hwnd_, 0, opacity_, LWA_ALPHA);
-    }
-
-    // Thread-safe: chamada do worker. Só posta mensagem, nunca desenha aqui.
     void PostUpdate(const WidgetData& d) {
-        { std::lock_guard lk(m_); data_ = d; dirty_ = true; }
+        { std::lock_guard lk(m_); data_ = d; }
         if (hwnd_) ::PostMessageW(hwnd_, kMsgUpdate, 0, 0);
     }
 
 private:
-    static constexpr int kW = 248, kH = 104;
+    static constexpr int kW = 300, kH = 148;
     static constexpr UINT kMsgUpdate = WM_APP + 10;
 
     static LRESULT CALLBACK WndProcStatic(HWND h, UINT m, WPARAM w, LPARAM l) {
@@ -78,15 +71,12 @@ private:
 
     LRESULT WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         switch (m) {
-        case kMsgUpdate: {
-            { std::lock_guard lk(m_); dirty_ = false; }
+        case kMsgUpdate:
             ::InvalidateRect(h, nullptr, FALSE);
             return 0;
-        }
         case WM_PAINT: Paint(h); return 0;
         case WM_NCHITTEST:
-            // Arrastável pela área toda, a menos que travado
-            return locked_ ? HTCLIENT : HTCAPTION;
+            return HTCLIENT; // fixo; mover pelo menu? travado p/ não atrapalhar
         case WM_DISPLAYCHANGE: {
             RECT work{}; ::SystemParametersInfoW(SPI_GETWORKAREA, 0, &work, 0);
             ::SetWindowPos(h, nullptr, work.right - kW - 12, work.bottom - kH - 12,
@@ -94,7 +84,22 @@ private:
             return 0;
         }
         }
+        (void)w; (void)l;
         return ::DefWindowProcW(h, m, w, l);
+    }
+
+    static void Bar(HDC dc, int x, int y, int w, int h, float frac, COLORREF fill) {
+        if (frac < 0.f) frac = 0.f; if (frac > 1.f) frac = 1.f;
+        HBRUSH track = ::CreateSolidBrush(RGB(30, 41, 59));
+        RECT tr{ x, y, x + w, y + h };
+        ::FillRect(dc, &tr, track);
+        ::DeleteObject(track);
+        RECT fr{ x, y, x + static_cast<int>(w * frac), y + h };
+        if (fr.right > fr.left) {
+            HBRUSH b = ::CreateSolidBrush(fill);
+            ::FillRect(dc, &fr, b);
+            ::DeleteObject(b);
+        }
     }
 
     void Paint(HWND h) {
@@ -114,32 +119,51 @@ private:
 
         ::SetBkMode(mem, TRANSPARENT);
 
-        // Temperatura gigante, cor por faixa
-        HFONT big = ::CreateFontW(46, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+        HFONT big = ::CreateFontW(52, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Consolas");
-        HFONT med = ::CreateFontW(18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+        HFONT med = ::CreateFontW(19, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Consolas");
+            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+        HFONT sml = ::CreateFontW(15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
         HFONT oldF = static_cast<HFONT>(::SelectObject(mem, big));
+
+        // Temperatura grande à esquerda
         ::SetTextColor(mem, TempToColor(d.tempC));
         wchar_t t[16]{};
-        ::swprintf_s(t, L"%.0f°", d.tempC);
-        ::TextOutW(mem, 12, 2, t, ::lstrlenW(t));
+        ::swprintf_s(t, L"%.0f\u00B0", d.tempC); // U+00B0 existe no Segoe UI
+        RECT rt{ 12, 0, 150, 66 };
+        ::DrawTextW(mem, t, -1, &rt, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
-        // Fonte do sensor no canto superior direito
+        // Fonte do sensor + labels à direita
         ::SelectObject(mem, med);
-        ::SetTextColor(mem, RGB(100, 116, 139));
-        ::TextOutW(mem, kW - 62, 10, d.src, ::lstrlenW(d.src));
+        ::SetTextColor(mem, RGB(148, 163, 184));
+        RECT rs{ 150, 6, kW - 10, 30 };
+        ::DrawTextW(mem, d.src, -1, &rs, DT_RIGHT | DT_SINGLELINE);
 
-        // CPU + RAM legíveis
+        ::SelectObject(mem, sml);
+        wchar_t l1[32]{}, l2[32]{};
+        ::swprintf_s(l1, L"CPU %.0f%%", static_cast<double>(d.cpuPct));
+        double gb = d.memMB / 1024.0;
+        ::swprintf_s(l2, L"RAM %.1f GB", gb);
+        RECT r1{ 150, 32, kW - 10, 54 }, r2{ 150, 54, kW - 10, 76 };
         ::SetTextColor(mem, RGB(226, 232, 240));
-        wchar_t s2[64]{};
-        ::swprintf_s(s2, L"CPU %.0f%%   %.1f GB", d.cpuPct, d.memMB / 1024.0);
-        ::TextOutW(mem, 12, kH - 30, s2, ::lstrlenW(s2));
+        ::DrawTextW(mem, l1, -1, &r1, DT_RIGHT | DT_SINGLELINE);
+        ::DrawTextW(mem, l2, -1, &r2, DT_RIGHT | DT_SINGLELINE);
+
+        // Barras
+        Bar(mem, 12, 84, kW - 24, 12, d.cpuPct / 100.f, RGB(74, 222, 128));
+        Bar(mem, 12, 102, kW - 24, 12, static_cast<float>(d.memMB) / 16384.f, RGB(96, 165, 250));
+
+        // Legendas das barras
+        ::SetTextColor(mem, RGB(100, 116, 139));
+        RECT rl{ 12, 118, kW - 10, kH - 4 };
+        ::DrawTextW(mem, L"uso de CPU e memória", -1, &rl, DT_LEFT | DT_SINGLELINE);
 
         ::SelectObject(mem, oldF);
-        ::DeleteObject(big); ::DeleteObject(med);
+        ::DeleteObject(big); ::DeleteObject(med); ::DeleteObject(sml);
 
         ::BitBlt(hdc, 0, 0, rc.right, rc.bottom, mem, 0, 0, SRCCOPY);
         ::SelectObject(mem, oldBmp);
@@ -150,8 +174,6 @@ private:
 
     HWND hwnd_ = nullptr;
     WidgetData data_{};
-    bool dirty_ = false;
-    bool locked_ = false;
     BYTE opacity_ = 235;
     std::mutex m_;
 };

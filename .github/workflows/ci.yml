@@ -38,6 +38,13 @@ jobs:
           if (-not $p.WaitForExit(15000)) { Stop-Process $p -Force; throw 'smoke-test travou >15s' }
           if ($p.ExitCode -ne 0) { throw "smoke-test exit=$($p.ExitCode)" }
 
+      - name: Smoke test UI (abre o painel e fecha)
+        shell: pwsh
+        run: |
+          $p = Start-Process .\build\NanoTask.exe -ArgumentList '--smoke-ui' -PassThru
+          if (-not $p.WaitForExit(25000)) { Stop-Process $p -Force; throw 'smoke-ui travou >25s' }
+          if ($p.ExitCode -ne 0) { throw "smoke-ui exit=$($p.ExitCode)" }
+
       - name: Upload artefato (portable)
         uses: actions/upload-artifact@v4
         with:

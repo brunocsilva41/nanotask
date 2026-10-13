@@ -44,7 +44,7 @@ endif()
 
 target_link_libraries(NanoTask PRIVATE
     user32 gdi32 shell32 advapi32 pdh iphlpapi dnsapi powrprof
-    winhttp bcrypt shell32 ole32
+    winhttp bcrypt shell32 ole32 ws2_32
 )
 
 # Instalação portable (o instalador Inno usa os mesmos arquivos)
