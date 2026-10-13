@@ -36,6 +36,7 @@ namespace winrt::NanoTask::UI::implementation
             this->try_as<::winrt::Microsoft::UI::Composition::ICompositionSupportsSystemBackdrop>());
         mica_.SetSystemBackdropConfiguration(backdropConfig_);
 
+        Title(L"NanoTask — painel");
         activatedToken_ = Activated({ this, &MainWindow::OnActivated });
 
         // Blackbox retroativo do host (FileMapping); nulo = host fechado
@@ -85,7 +86,7 @@ namespace winrt::NanoTask::UI::implementation
         {
             wchar_t b[64]{};
             std::string src(temps.Source());
-            swprintf_s(b, L"%.0f °C  (%S)", static_cast<double>(*t), src.c_str());
+            swprintf_s(b, L"%.0f°", static_cast<double>(*t));
             vm_.CpuTemp(b);
             Windows::UI::Color c = *t < 65.0 ? Colors::LimeGreen()
                     : *t <= 80.0 ? Colors::Orange() : Colors::Red();
@@ -103,25 +104,27 @@ namespace winrt::NanoTask::UI::implementation
                             L"</binding></visual></toast>"));
                 }
                 catch (...) {}
-                AlertBanner().Visibility(Visibility::Visible);
             }
             else if (*t < 75.0)
             {
                 toasted_ = false;
-                AlertBanner().Visibility(Visibility::Collapsed);
             }
+            StatusPill().Text(L"monitorando · " + std::wstring(src.begin(), src.end()));
+            TempPanel().Visibility(Visibility::Visible);
+            TempEmpty().Visibility(Visibility::Collapsed);
+        }
+        else
+        {
+            vm_.CpuTemp(L"—");
+            TempPanel().Visibility(Visibility::Collapsed);
+            TempEmpty().Visibility(Visibility::Visible);
+            StatusPill().Text(L"sem sensor de temperatura");
         }
         DrawGraph();
     }
 
     void MainWindow::DrawGraph()
     {
-        auto points = CpuLine().Points();
-        points.Clear();
-        double w = CpuLine().ActualWidth();
-        double h = CpuLine().ActualHeight();
-        if (w < 10.0 || h < 10.0) return;
-
         std::vector<float> vals;
         auto* ring = static_cast<nt::shared::NanoRing*>(mapView_);
         if (ring && ring->version == nt::shared::kContractVersion && ring->count > 1)
@@ -135,7 +138,21 @@ namespace winrt::NanoTask::UI::implementation
             if (live_.size() > 300) live_.pop_front();
             vals.assign(live_.begin(), live_.end());
         }
-        if (vals.size() < 2) return;
+
+        if (vals.size() < 2)
+        {
+            CpuLine().Visibility(Visibility::Collapsed);
+            GraphEmpty().Visibility(Visibility::Visible);
+            return;
+        }
+        CpuLine().Visibility(Visibility::Visible);
+        GraphEmpty().Visibility(Visibility::Collapsed);
+
+        auto points = CpuLine().Points();
+        points.Clear();
+        double w = CpuLine().ActualWidth();
+        double h = CpuLine().ActualHeight();
+        if (w < 10.0 || h < 10.0) return;
         for (size_t i = 0; i < vals.size(); ++i)
         {
             float v = vals[i];
@@ -324,15 +341,14 @@ namespace winrt::NanoTask::UI::implementation
                 swprintf_s(b, L"%s — %d%%", name.c_str(), static_cast<int>(f * 100.f));
                 AudioList().Items().Append(box_value(b));
                 sessions_.push_back({ name, vol });
+                if (sessions_.size() >= 12) break; // trava de sanidade
             }
         }
         catch (...) {}
+        AudioEmpty().Visibility(sessions_.empty() ? Visibility::Visible : Visibility::Collapsed);
         if (!sessions_.empty())
         {
             AudioList().SelectedIndex(0);
-            wchar_t b[32]{};
-            swprintf_s(b, L"%.0f%%", AppVol().Value());
-            VolLabel().Text(b);
         }
     }
 
@@ -341,7 +357,7 @@ namespace winrt::NanoTask::UI::implementation
     void MainWindow::OnAppVolChanged(IInspectable const&, Controls::Primitives::RangeBaseValueChangedEventArgs const&)
     {
         wchar_t b[32]{};
-        swprintf_s(b, L"%.0f%%", AppVol().Value());
+        swprintf_s(b, L"Aplicar %.0f%%", AppVol().Value());
         VolLabel().Text(b);
     }
 

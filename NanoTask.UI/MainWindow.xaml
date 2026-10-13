@@ -8,126 +8,300 @@
     mc:Ignorable="d"
     Title="NanoTask">
 
-    <ScrollViewer>
-    <Grid Margin="16" ColumnSpacing="12" RowSpacing="12">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Grid>
+    <Grid.Resources>
+        <!-- Cartão base -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+        <!-- Cabeçalho de card: ícone + título -->
+        <Style x:Key="CardTitle" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Spacing" Value="10"/>
+        </Style>
+        <Style x:Key="CardIcon" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Foreground" Value="{ThemeResource AccentFillColorDefaultBrush}"/>
+        </Style>
+        <Style x:Key="CardHeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- Empty state -->
+        <Style x:Key="EmptyState" TargetType="StackPanel">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Spacing" Value="8"/>
+        </Style>
+        <Style x:Key="EmptyIcon" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorDisabledBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="EmptyText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+    </Grid.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 1 Processos (alto, 2 linhas) -->
-        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Processos" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Text="{x:Bind ViewModel.TopProc, Mode=OneWay}" FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
-                <ListView x:Name="ProcList" Height="260" SelectionMode="Single"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Atualizar" Click="OnProcRefresh"/>
-                    <Button Content="Finalizar" Click="OnKill"/>
-                </StackPanel>
-                <Button Content="Kill em árvore" Click="OnTreeKill"/>
-            </StackPanel>
-        </Border>
-
-        <!-- 2 Temperaturas -->
-        <Border Grid.Row="0" Grid.Column="1"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Temperaturas" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock x:Name="TempBig" Text="{x:Bind ViewModel.CpuTemp, Mode=OneWay}" FontSize="44" FontWeight="Bold"/>
-                <TextBlock Text="{x:Bind ViewModel.MemText, Mode=OneWay}" FontSize="13"/>
-                <Border x:Name="AlertBanner" Visibility="Collapsed" Background="#7F1D1D"
-                        CornerRadius="8" Padding="8" Margin="0,4,0,0">
-                    <TextBlock Text="Thermal throttling: possível corte de clock!" FontSize="12" TextWrapping="Wrap"/>
+        <!-- Barra de título custom -->
+        <Grid Grid.Row="0" Background="Transparent">
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="16,0,0,0" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE9D9;" FontSize="16" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                <TextBlock Text="NanoTask" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                <Border Background="{ThemeResource ControlFillColorDefaultBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusPill" Text="monitorando" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Border>
             </StackPanel>
-        </Border>
+        </Grid>
 
-        <!-- 3 Blackbox 5 min -->
-        <Border Grid.Row="0" Grid.Column="2"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Blackbox — 5 min" FontSize="16" FontWeight="SemiBold"/>
-                <Polyline x:Name="CpuLine" Stroke="LimeGreen" StrokeThickness="2" Height="120"/>
-                <TextBlock Text="CPU retroativo (host em background)" FontSize="11" Opacity="0.6"/>
-            </StackPanel>
-        </Border>
+        <ScrollViewer Grid.Row="1" Padding="16,0,16,16">
+            <Grid ColumnSpacing="12" RowSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <!-- 4 Energia -->
-        <Border Grid.Row="1" Grid.Column="1"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Energia" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Text="{x:Bind ViewModel.PowerText, Mode=OneWay}" FontSize="13" TextWrapping="Wrap"/>
-            </StackPanel>
-        </Border>
+                <!-- 1 PROCESSOS -->
+                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Style="{StaticResource Card}">
+                    <Grid RowSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE716;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Processos" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <ListView x:Name="ProcList" Grid.Row="1" SelectionMode="Single"
+                                  Height="320" CornerRadius="8"
+                                  Background="{ThemeResource ControlFillColorDefaultBrush}"/>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                            <Button Click="OnProcRefresh" ToolTipService.ToolTip="Recarregar lista">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                    <TextBlock Text="Atualizar"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="OnKill" ToolTipService.ToolTip="Encerra o processo selecionado">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                    <TextBlock Text="Finalizar"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="OnTreeKill" ToolTipService.ToolTip="Encerra o processo e todos os filhos">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xED62;" FontSize="14"/>
+                                    <TextBlock Text="Kill em árvore"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-        <!-- 5 Presets -->
-        <Border Grid.Row="1" Grid.Column="2"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Presets (janela em foco)" FontSize="16" FontWeight="SemiBold"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Eco" Click="OnEco"/>
-                    <Button Content="Normal" Click="OnBalanced"/>
-                    <Button Content="Turbo" Click="OnTurbo"/>
-                </StackPanel>
-                <Button Content="Congelar/Descongelar Dev (Docker)" Click="OnDevFreeze"/>
-            </StackPanel>
-        </Border>
+                <!-- 2 TEMPERATURAS -->
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource Card}">
+                    <Grid RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE9CA;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Temperatura" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <!-- Com sensor -->
+                        <StackPanel x:Name="TempPanel" Grid.Row="1" Spacing="2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock x:Name="TempBig" Text="{x:Bind ViewModel.CpuTemp, Mode=OneWay}"
+                                       FontSize="52" FontWeight="Bold" LineHeight="56"/>
+                            <TextBlock Text="{x:Bind ViewModel.MemText, Mode=OneWay}"
+                                       FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                        <!-- Sem sensor -->
+                        <StackPanel x:Name="TempEmpty" Grid.Row="1" Style="{StaticResource EmptyState}">
+                            <FontIcon Glyph="&#xE81C;" Style="{StaticResource EmptyIcon}"/>
+                            <TextBlock Style="{StaticResource EmptyText}"
+                                       Text="Sensor não disponível nesta máquina. A cadeia tenta NVML (GPU NVIDIA) e depois a zona térmica ACPI."/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-        <!-- 6 Áudio por app -->
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Mixer por aplicativo" FontSize="16" FontWeight="SemiBold"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <ListView x:Name="AudioList" Width="380" Height="90" SelectionMode="Single"/>
-                    <StackPanel Spacing="8" VerticalAlignment="Center">
-                        <Slider x:Name="AppVol" Minimum="0" Maximum="100" Width="180"
-                                ValueChanged="OnAppVolChanged"/>
-                        <TextBlock x:Name="VolLabel" Text="—" FontSize="13"/>
+                <!-- 3 BLACKBOX -->
+                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource Card}">
+                    <Grid RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE9D2;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Blackbox — 5 min" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <Grid Grid.Row="1" MinHeight="120">
+                            <Polyline x:Name="CpuLine" Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                      StrokeThickness="2" VerticalAlignment="Center" Height="110"
+                                      Visibility="Collapsed"/>
+                            <StackPanel x:Name="GraphEmpty" Style="{StaticResource EmptyState}">
+                                <FontIcon Glyph="&#xE9D9;" Style="{StaticResource EmptyIcon}"/>
+                                <TextBlock Style="{StaticResource EmptyText}"
+                                           Text="Gráfico aparece quando o host fantasma estiver coletando em background."/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- 4 ENERGIA -->
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE945;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Energia" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <TextBlock x:Name="EnergyBig" Text="R$ 1,32/dia" FontSize="30" FontWeight="SemiBold"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="EnergyHour" Text="{x:Bind ViewModel.PowerText, Mode=OneWay}"
+                                       FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorDisabledBrush}"
+                                       Text="Estimativa: TDP 65 W × R$ 0,85/kWh — ajustável no settings.json"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Atualizar sessões" Click="OnAudioRefresh"/>
-                    <Button Content="Aplicar volume no app" Click="OnAudioApply"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
+                </Border>
 
-        <!-- 7 Ações -->
-        <Border Grid.Row="2" Grid.Column="2"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="12">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Ações" FontSize="16" FontWeight="SemiBold"/>
-                <Button Content="RAM Flush" Click="OnRamFlush"/>
-                <Button Content="Flush DNS" Click="OnFlushDns"/>
-                <Button Content="PANIC (Explorer)" Click="OnPanic"/>
-            </StackPanel>
-        </Border>
+                <!-- 5 PRESETS -->
+                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE7EE;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Presets — janela em foco" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Click="OnEco" ToolTipService.ToolTip="Prioridade abaixo do normal + EcoQoS">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE9E9;" FontSize="14"/>
+                                    <TextBlock Text="Eco"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="OnBalanced" ToolTipService.ToolTip="Prioridade normal">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE9D9;" FontSize="14"/>
+                                    <TextBlock Text="Normal"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="OnTurbo" ToolTipService.ToolTip="Prioridade alta">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xEA35;" FontSize="14"/>
+                                    <TextBlock Text="Turbo"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <Button Click="OnDevFreeze" HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE9F5;" FontSize="14"/>
+                                <TextBlock x:Name="FreezeLabel" Text="Congelar Dev (Docker/SQL)"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
 
+                <!-- 6 MIXER -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource Card}">
+                    <Grid RowSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE767;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Mixer por aplicativo" Style="{StaticResource CardHeaderText}"/>
+                            <Button Margin="12,0,0,0" Click="OnAudioRefresh" Padding="8,4"
+                                    ToolTipService.ToolTip="Reenumerar sessões de áudio">
+                                <FontIcon Glyph="&#xE72C;" FontSize="13"/>
+                            </Button>
+                        </StackPanel>
+                        <Grid Grid.Row="1" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.4*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <ListView x:Name="AudioList" SelectionMode="Single" Height="110" CornerRadius="8"
+                                          Background="{ThemeResource ControlFillColorDefaultBrush}"/>
+                                <StackPanel x:Name="AudioEmpty" Style="{StaticResource EmptyState}">
+                                    <FontIcon Glyph="&#xE767;" Style="{StaticResource EmptyIcon}"/>
+                                    <TextBlock Style="{StaticResource EmptyText}"
+                                               Text="Nenhum app emitindo som agora."/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center" Width="200">
+                                <TextBlock Text="Volume do app selecionado" FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap"/>
+                                <Slider x:Name="AppVol" Minimum="0" Maximum="100"
+                                        ValueChanged="OnAppVolChanged"/>
+                                <Button Click="OnAudioApply" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE767;" FontSize="14"/>
+                                        <TextBlock x:Name="VolLabel" Text="Aplicar"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- 7 AÇÕES -->
+                <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Style="{StaticResource CardTitle}">
+                            <FontIcon Glyph="&#xE90F;" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Text="Ações" Style="{StaticResource CardHeaderText}"/>
+                        </StackPanel>
+                        <Button Click="OnRamFlush" HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                <TextBlock Text="RAM Flush (Standby)"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Click="OnFlushDns" HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE821;" FontSize="14"/>
+                                <TextBlock Text="Flush DNS"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Click="OnPanic" HorizontalAlignment="Stretch" Background="#B91C1C"
+                                ToolTipService.ToolTip="Encerra e reinicia o Explorer (shell travada)">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE7BA;" FontSize="14"/>
+                                <TextBlock Text="PANIC — reiniciar Explorer" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+        </ScrollViewer>
     </Grid>
-    </ScrollViewer>
+    </Grid>
 </Window>
+
