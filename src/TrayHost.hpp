@@ -1,6 +1,7 @@
 #pragma once
 #include "Foundation.hpp"
 #include "UiLauncher.hpp"
+#include "TempProviders.hpp"
 #include <shellapi.h>
 #include <thread>
 #include <stop_token>
@@ -36,10 +37,15 @@ public:
     }
 
     void RunWorker(std::stop_token st) {
+        MultiTempProvider temps; // NVML -> WMI; "none" = sweep sintético (VMs sem sensor)
         float fakeTemp = 45.0f;
         while (!st.stop_requested()) {
-            UpdateIcon(fakeTemp);
-            fakeTemp += 1.0f; if (fakeTemp > 85.0f) fakeTemp = 45.0f;
+            if (auto t = temps.ReadCelsius()) {
+                UpdateIcon(*t); // sensor real; fonte visível via temps.Source()
+            } else {
+                UpdateIcon(fakeTemp);
+                fakeTemp += 1.0f; if (fakeTemp > 85.0f) fakeTemp = 45.0f;
+            }
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }

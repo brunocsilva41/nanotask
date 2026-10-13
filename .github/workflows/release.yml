@@ -20,6 +20,11 @@ jobs:
         shell: pwsh
         run: |
           $v = '${{ github.ref_name }}'.TrimStart('v')
+          if ($v -notmatch '^\d+\.\d+\.\d+$') {
+            $f = (Get-Content VERSION -Raw).Trim()
+            Write-Warning "Tag '$v' fora do padrao, usando VERSION=$f"
+            $v = $f
+          }
           "VERSION=$v" >> $env:GITHUB_OUTPUT
           $p = $v.Split('.')
           "MAJOR=$($p[0])" >> $env:GITHUB_OUTPUT
@@ -56,6 +61,21 @@ jobs:
             > dist\CHANGELOG.md 2>$null
           if (-not (Test-Path dist\CHANGELOG.md)) { 'Release ${{ steps.ver.outputs.VERSION }}' > dist\CHANGELOG.md }
 
+      - name: SHA-256 dos artefatos
+        shell: pwsh
+        run: |
+          Get-ChildItem dist/NanoTask-Setup-*.exe, dist/NanoTask-portable-*.zip |
+            ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Tee-Object dist/SHA256SUMS.txt
+
+      - name: Assinar instalador (SignPath, só com secrets configurados)
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          Write-Host 'Assinatura via SignPath: ver docs/SIGNING.md para o bloco completo.'
+
       - name: Publicar GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -63,3 +83,4 @@ jobs:
           files: |
             dist/NanoTask-Setup-*.exe
             dist/NanoTask-portable-*.zip
+            dist/SHA256SUMS.txt
