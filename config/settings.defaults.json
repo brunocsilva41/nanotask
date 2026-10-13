@@ -22,5 +22,8 @@
   "safety": {
     "confirmKill": true,
     "protectCritical": true
+  },
+  "widget": {
+    "widgetEnabled": true
   }
 }

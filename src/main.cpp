@@ -17,6 +17,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR pCmdLine, int) {
 
     nt::TrayHost host;
     if (!host.Init(hInst)) return 1;
+    host.Configure(cfg);
     if (smoke) { host.Shutdown(); return 0; } // CI: prova init/shutdown limpos
 
     std::jthread worker([&host](std::stop_token st){ host.RunWorker(st); });

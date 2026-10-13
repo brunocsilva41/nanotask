@@ -22,6 +22,7 @@ struct Settings {
     bool autoDownload = false;
     bool confirmKill = true;
     bool protectCritical = true;
+    bool widgetEnabled = true; // widget flutuante visível no boot
 };
 
 inline std::filesystem::path AppDataDir() {
@@ -55,6 +56,7 @@ inline Settings LoadSettings() {
     flag("\"autoDownload\"", s.autoDownload);
     flag("\"confirmKill\"", s.confirmKill);
     flag("\"protectCritical\"", s.protectCritical);
+    flag("\"widgetEnabled\"", s.widgetEnabled);
     if (j.find("\"beta\"") != std::string::npos) s.updateChannel = L"beta";
     return s;
 }
