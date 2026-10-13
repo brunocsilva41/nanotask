@@ -55,6 +55,8 @@ jobs:
       - name: Gerar instalador
         shell: pwsh
         run: |
+          mkdir build\MinSizeRel -ErrorAction SilentlyContinue | Out-Null
+          Copy-Item build\NanoTask.exe build\MinSizeRel\ -Force
           & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' `
             installer\NanoTask.iss /DAppVersion=${{ steps.ver.outputs.VERSION }}
           mkdir dist-portable -ErrorAction SilentlyContinue | Out-Null

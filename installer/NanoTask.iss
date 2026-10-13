@@ -56,13 +56,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "trayonly"; Description: "Modo fantasma (apenas bandeja, sem janela na barra de tarefas)"; GroupDescription: "Comportamento:"; Flags: checkedonce
 
 [Files]
-; NOTA: o workflow release compila com Ninja (-> build\NanoTask.exe).
-; Build local com VS generator: copie o exe para build\ ou ajuste o path.
-Source: "..\build\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\NanoTask.UI\bin\x64\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "*.pdb,*.ilk,*.exp,*.lib,*.tlog,*.rsp"
+; Host: build local (VS) e CI (Ninja via copy para build\MinSizeRel)
+Source: "..\build\MinSizeRel\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\NanoTask.UI\bin\x64\Release\*"; DestDir: "{app}"; Excludes: "*.pdb,*.ilk,*.exp,*.lib,*.tlog,*.rsp"; Flags: ignoreversion recursesubdirs
 Source: "..\assets\tray\*.ico"; DestDir: "{app}\assets\tray"; Flags: ignoreversion recursesubdirs
-Source: "..\config\settings.defaults.json"; DestDir: "{app}\config"; Flags: ignoreversion onlybelowversion
-Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\config\settings.defaults.json"; DestDir: "{app}\config"; Flags: ignoreversion
+Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
