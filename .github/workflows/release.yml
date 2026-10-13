@@ -45,8 +45,8 @@ jobs:
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $msb = & $vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
-          & $msb NanoTask.UI/NanoTask.UI.vcxproj -t:Restore -p:Configuration=Release -p:Platform=x64
-          & $msb NanoTask.UI/NanoTask.UI.vcxproj -p:Configuration=Release -p:Platform=x64
+          & $msb NanoTask.UI/NanoTask.UI.vcxproj -t:Restore -p:Configuration=Release -p:Platform=x64 -p:PlatformToolset=v143
+          & $msb NanoTask.UI/NanoTask.UI.vcxproj -p:Configuration=Release -p:Platform=x64 -p:PlatformToolset=v143
 
       - name: Instalar Inno Setup
         shell: pwsh
