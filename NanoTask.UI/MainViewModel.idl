@@ -1,0 +1,15 @@
+namespace NanoTask.UI
+{
+    [default_interface]
+    runtimeclass MainViewModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        MainViewModel();
+        String CpuTemp;
+        Double TempValue { get; };
+        Double CpuPct { get; };
+        String MemText { get; };
+        String TopProc { get; };
+        String PowerText { get; };
+        void Refresh();
+    }
+}

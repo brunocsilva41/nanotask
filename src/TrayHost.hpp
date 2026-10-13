@@ -4,6 +4,7 @@
 #include "Settings.hpp"
 #include "TempProviders.hpp"
 #include "Blackbox.hpp"
+#include "Shared/BlackboxShared.h"
 #include "OverlayWidget.hpp"
 #include "Dashboard.hpp"
 #include "BugReport.hpp"
@@ -49,6 +50,13 @@ public:
         if (!::Shell_NotifyIconW(NIM_ADD, &nid)) { LogWin32Error("Shell_NotifyIcon ADD"); return false; }
         m_telem.Start(); // PDH + top PID em background; jthread joina sozinho
         if (!::AddClipboardFormatListener(m_hwnd)) LogWin32Error("Clipboard:Listener");
+        // Anel compartilhado p/ a UI WinUI ler o retroativo de 5 min
+        hMap_ = ::CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE,
+            0, sizeof(nt::shared::NanoRing), nt::shared::kMapName);
+        if (hMap_) {
+            view_ = ::MapViewOfFile(hMap_, FILE_MAP_WRITE, 0, 0, sizeof(nt::shared::NanoRing));
+            if (!view_) { LogWin32Error("Ring:Map"); ::CloseHandle(hMap_); hMap_ = nullptr; }
+        } else LogWin32Error("Ring:Create");
         return true;
     }
 
@@ -89,7 +97,26 @@ public:
             wd.tempC = temp; wd.cpuPct = cpu; wd.memMB = mem;
             wcsncpy_s(wd.src, src, _TRUNCATE);
             m_widget.PostUpdate(wd);
+            PublishRing();
             std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+
+    // Copia o snapshot do Blackbox para o FileMapping (UI WinUI lê o retroativo).
+    void PublishRing() {
+        if (!view_) return;
+        auto snap = m_box.Snapshot();
+        auto* ring = static_cast<nt::shared::NanoRing*>(view_);
+        ring->version = nt::shared::kContractVersion;
+        unsigned long n = static_cast<unsigned long>(
+            (std::min)(snap.size(), static_cast<size_t>(nt::shared::kRingCap)));
+        ring->count = n;
+        for (unsigned long i = 0; i < n; ++i) {
+            auto& d = ring->items[i];
+            const auto& s = snap[i];
+            d.t = s.t; d.cpuPct = s.cpuPct; d.diskPct = s.diskPct;
+            d.memUsedMB = s.memUsedMB; d.topPid = s.topPid;
+            wcsncpy_s(d.topName, s.topName, _TRUNCATE);
         }
     }
 
@@ -106,6 +133,8 @@ public:
         m_dash.Close();
         m_widget.Destroy();
         ::RemoveClipboardFormatListener(m_hwnd);
+        if (view_) { ::UnmapViewOfFile(view_); view_ = nullptr; }
+        if (hMap_) { ::CloseHandle(hMap_); hMap_ = nullptr; }
         NOTIFYICONDATAW nid{}; nid.cbSize = sizeof(nid);
         nid.hWnd = m_hwnd; nid.uID = ID_TRAY;
         ::Shell_NotifyIconW(NIM_DELETE, &nid);
@@ -227,7 +256,8 @@ private:
 
     LRESULT WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         if (m == WM_TRAY) {
-            if (LOWORD(l) == WM_LBUTTONUP) { OpenDashboard(); return 0; }
+            // Ação primária: UI WinUI (lazy, processo separado); fallback Dashboard.
+            if (LOWORD(l) == WM_LBUTTONUP) { if (!UiLauncher::Show(h)) OpenDashboard(); return 0; }
             if (LOWORD(l) == WM_RBUTTONUP) { ShowMenu(); return 0; }
         }
         if (m == WM_CLIPBOARDUPDATE) { OnClipboard(); return 0; }
@@ -268,6 +298,8 @@ private:
     DashCfg dashCfg_{};
     std::vector<std::wstring> clip_{};
     std::mutex clipMtx_{};
+    HANDLE hMap_ = nullptr;
+    void* view_ = nullptr;
 };
 
 } // namespace nt

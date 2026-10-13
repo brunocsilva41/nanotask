@@ -1,6 +1,14 @@
 build/
 dist/
 dist-portable/
+packages/
 *.user
 .vs/
 out/
+NanoTask.UI/bin/
+NanoTask.UI/obj/
+NanoTask.UI/XamlMetaDataProvider.cpp
+NanoTask.UI/XamlMetaDataProvider.idl
+tools-nuget.exe
+*.ilk
+*.pdb

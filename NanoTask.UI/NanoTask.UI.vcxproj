@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B4A7C9D1-3E5F-4A6B-8C2D-9E0F1A2B3C4D}</ProjectGuid>
+    <RootNamespace>NanoTask.UI</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <AppContainerApplication>false</AppContainerApplication>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.22621.0</WindowsTargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
+    <AdditionalManifestFiles>$(ProjectDir)app.manifest</AdditionalManifestFiles>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\src;$(IntDir);$(IntDir)Generated Files;$(IntDir)Generated Files\winrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>pdh.lib;psapi.lib;iphlpapi.lib;dnsapi.lib;ws2_32.lib;winhttp.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\src;$(IntDir);$(IntDir)Generated Files;$(IntDir)Generated Files\winrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>pdh.lib;psapi.lib;iphlpapi.lib;dnsapi.lib;ws2_32.lib;winhttp.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Midl>
+      <EnableWindowsRuntime Condition="'%(Midl.EnableWindowsRuntime)' == ''">true</EnableWindowsRuntime>
+      <Enumclass Condition="'%(Midl.Enumclass)' == ''">true</Enumclass>
+      <PrependWithABINamepsace Condition="'%(Midl.PrependWithABINamepsace)' == ''">true</PrependWithABINamepsace>
+      <MetadataFileName Condition="'%(Midl.MetadataFileName)' == ''">$(OutDir)%(Filename).winmd</MetadataFileName>
+      <!-- NUNCA gerar saídas no diretório do projeto (MIDL sobrescreveria os fontes!) -->
+      <HeaderFileName>$(IntDir)%(Filename)_h.h</HeaderFileName>
+      <InterfaceIdentifierFileName>$(IntDir)%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>$(IntDir)%(Filename)_p.c</ProxyFileName>
+      <DllDataFileName>$(IntDir)dlldata.c</DllDataFileName>
+      <AdditionalMetadataDirectories Condition="'$(WindowsSDK_MetadataFoundationPath)' != ''">$(WindowsSDK_MetadataFoundationPath);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+      <AdditionalMetadataDirectories Condition="'$(WindowsSDK_MetadataFoundationPath)' == ''">$(WindowsSDK_MetadataPath);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="MainViewModel.h" />
+    <ClInclude Include="pch.h" />
+    <!-- WinMDs explícitos para o RAR (trem 1.8; ajustar se trocar o AppSDK). -->
+    <Reference Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.winui\1.8.260803003\metadata\*.winmd">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.foundation\1.8.260803002\metadata\*.winmd">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.interactiveexperiences\1.8.260708001\metadata\10.0.18362.0\*.winmd">
+      <Private>false</Private>
+    </Reference>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MainViewModel.cpp" />
+    <!-- Impl.g.cpp o toolchain não adiciona sozinho (o resto ele adiciona) -->
+    <ClCompile Include="$(IntDir)XamlTypeInfo.Impl.g.cpp" />
+    <ClCompile Include="$(IntDir)XamlTypeInfo.g.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ApplicationDefinition Include="App.xaml">
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Midl Include="App.idl" />
+    <Midl Include="MainWindow.idl" />
+    <Midl Include="MainViewModel.idl" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260921001" />
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="2.0.250303.1" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+  <!-- Fixa versão da plataforma WinRT (resíduo .NET a colocava em 7.0) -->
+  <PropertyGroup>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+  </PropertyGroup>
+  <!-- Refs explícitas p/ o XamlCompiler (o RAR não as resolve neste setup).
+       Versões acompanham os PackageReference. -->
+  <Target Name="NanoAddXamlWinMDs" BeforeTargets="MarkupCompilePass1;MarkupCompilePass2">
+    <ItemGroup>
+      <ReferencePath Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.winui\1.8.260803003\metadata\*.winmd" />
+      <ReferencePath Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.foundation\1.8.260803002\metadata\*.winmd" />
+      <ReferencePath Include="$(ProjectDir)..\packages\microsoft.windowsappsdk.interactiveexperiences\1.8.260708001\metadata\10.0.18362.0\*.winmd" />
+      <ReferencePath Include="C:\Program Files (x86)\Windows Kits\10\References\10.0.26100.0\Windows.Foundation.FoundationContract\4.0.0.0\Windows.Foundation.FoundationContract.winmd" />
+      <ReferencePath Include="C:\Program Files (x86)\Windows Kits\10\References\10.0.26100.0\Windows.Foundation.UniversalApiContract\19.0.0.0\Windows.Foundation.UniversalApiContract.winmd" />
+      <WinMDReferenceToCompile Include="@(ReferencePath)" />
+    </ItemGroup>
+  </Target>
+  <!-- Pass2 não engata sozinho em projeto unpackaged: normaliza o nome do winmd
+       mesclado e o executa antes do ClCompile (gera .xbf + corpos .g.cpp). -->
+  <Target Name="NanoCopyWinMD" BeforeTargets="MarkupCompilePass2">
+    <Copy SourceFiles="$(OutDir)NanoTask.winmd" DestinationFiles="$(OutDir)NanoTask.UI.winmd"
+          Condition="Exists('$(OutDir)NanoTask.winmd')" />
+  </Target>
+  <Target Name="NanoPass2" DependsOnTargets="MarkupCompilePass2" BeforeTargets="ClCompile" />
+</Project>

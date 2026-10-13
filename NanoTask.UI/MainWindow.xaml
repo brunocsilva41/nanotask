@@ -1,0 +1,133 @@
+<Window
+    x:Class="NanoTask.UI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:NanoTask.UI"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="NanoTask">
+
+    <ScrollViewer>
+    <Grid Margin="16" ColumnSpacing="12" RowSpacing="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1 Processos (alto, 2 linhas) -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Processos" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="{x:Bind ViewModel.TopProc, Mode=OneWay}" FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                <ListView x:Name="ProcList" Height="260" SelectionMode="Single"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Atualizar" Click="OnProcRefresh"/>
+                    <Button Content="Finalizar" Click="OnKill"/>
+                </StackPanel>
+                <Button Content="Kill em árvore" Click="OnTreeKill"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 2 Temperaturas -->
+        <Border Grid.Row="0" Grid.Column="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Temperaturas" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock x:Name="TempBig" Text="{x:Bind ViewModel.CpuTemp, Mode=OneWay}" FontSize="44" FontWeight="Bold"/>
+                <TextBlock Text="{x:Bind ViewModel.MemText, Mode=OneWay}" FontSize="13"/>
+                <Border x:Name="AlertBanner" Visibility="Collapsed" Background="#7F1D1D"
+                        CornerRadius="8" Padding="8" Margin="0,4,0,0">
+                    <TextBlock Text="Thermal throttling: possível corte de clock!" FontSize="12" TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- 3 Blackbox 5 min -->
+        <Border Grid.Row="0" Grid.Column="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Blackbox — 5 min" FontSize="16" FontWeight="SemiBold"/>
+                <Polyline x:Name="CpuLine" Stroke="LimeGreen" StrokeThickness="2" Height="120"/>
+                <TextBlock Text="CPU retroativo (host em background)" FontSize="11" Opacity="0.6"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 4 Energia -->
+        <Border Grid.Row="1" Grid.Column="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Energia" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="{x:Bind ViewModel.PowerText, Mode=OneWay}" FontSize="13" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 5 Presets -->
+        <Border Grid.Row="1" Grid.Column="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Presets (janela em foco)" FontSize="16" FontWeight="SemiBold"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Eco" Click="OnEco"/>
+                    <Button Content="Normal" Click="OnBalanced"/>
+                    <Button Content="Turbo" Click="OnTurbo"/>
+                </StackPanel>
+                <Button Content="Congelar/Descongelar Dev (Docker)" Click="OnDevFreeze"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 6 Áudio por app -->
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Mixer por aplicativo" FontSize="16" FontWeight="SemiBold"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ListView x:Name="AudioList" Width="380" Height="90" SelectionMode="Single"/>
+                    <StackPanel Spacing="8" VerticalAlignment="Center">
+                        <Slider x:Name="AppVol" Minimum="0" Maximum="100" Width="180"
+                                ValueChanged="OnAppVolChanged"/>
+                        <TextBlock x:Name="VolLabel" Text="—" FontSize="13"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Atualizar sessões" Click="OnAudioRefresh"/>
+                    <Button Content="Aplicar volume no app" Click="OnAudioApply"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 7 Ações -->
+        <Border Grid.Row="2" Grid.Column="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Ações" FontSize="16" FontWeight="SemiBold"/>
+                <Button Content="RAM Flush" Click="OnRamFlush"/>
+                <Button Content="Flush DNS" Click="OnFlushDns"/>
+                <Button Content="PANIC (Explorer)" Click="OnPanic"/>
+            </StackPanel>
+        </Border>
+
+    </Grid>
+    </ScrollViewer>
+</Window>
