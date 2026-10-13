@@ -37,9 +37,7 @@ jobs:
       - name: Build MinSizeRel (MSVC)
         shell: pwsh
         run: |
-          $v = '${{ steps.ver.outputs.VERSION }}'.Split('.')
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel `
-            -DAPP_VERSION_MAJOR=$($v[0]) -DAPP_VERSION_MINOR=$($v[1]) -DAPP_VERSION_PATCH=$($v[2])
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel
           cmake --build build --config MinSizeRel --parallel
 
       - name: Build UI (WinUI 3, MSBuild)
