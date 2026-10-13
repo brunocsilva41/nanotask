@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ler versão
+        id: ver
+        shell: pwsh
+        run: '"VERSION=$(Get-Content VERSION -Raw)".Trim() >> $env:GITHUB_OUTPUT'
+
+      - name: Configure (CMake + Ninja, MSVC)
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Smoke test (inicia em modo fantasma e sai)
+        shell: pwsh
+        run: |
+          $p = Start-Process .\build\NanoTask.exe -ArgumentList '--smoke-test' -PassThru
+          if (-not $p.WaitForExit(15000)) { Stop-Process $p -Force; throw 'smoke-test travou >15s' }
+          if ($p.ExitCode -ne 0) { throw "smoke-test exit=$($p.ExitCode)" }
+
+      - name: Upload artefato (portable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: NanoTask-portable-${{ steps.ver.outputs.VERSION }}
+          path: |
+            build/NanoTask.exe
+            assets/tray/*.ico
+            config/settings.defaults.json

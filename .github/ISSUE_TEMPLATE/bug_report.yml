@@ -1,0 +1,45 @@
+name: Report de bug
+description: Algo travou, vazou memória ou quebrou? Conta pra gente.
+title: "[bug] "
+labels: [bug]
+body:
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do NanoTask
+      description: Aparece no tooltip da bandeja ou em NanoTask-Setup-X.Y.Z.exe
+      placeholder: "ex: 1.0.0"
+    validations: { required: true }
+  - type: dropdown
+    id: modo
+    attributes:
+      label: Modo da barra de tarefas
+      options: [fantasma (só bandeja), fixo (taskbar), minimizado]
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes:
+      label: Passo a passo para reproduzir
+      placeholder: "1. Cliquei com Ctrl+Shift... 2. Travou..."
+    validations: { required: true }
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamento esperado
+  - type: input
+    id: ram
+    attributes:
+      label: RAM do processo (Private Working Set no Gerenciador de Tarefas)
+      placeholder: "ex: 4,2 MB"
+  - type: file
+    id: logs
+    attributes:
+      label: Logs
+      description: "Anexe %LOCALAPPDATA%\\NanoTask\\logs\\*.log e o settings.json (sem chaves pessoais)"
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist de segurança
+      options:
+        - label: "Rodei o smoke-test (`NanoTask.exe --smoke-test`)"
+        - label: "Testei sem outros overlays (MSI Afterburner, RivaTuner) ativos"

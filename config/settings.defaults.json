@@ -1,0 +1,26 @@
+{
+  "$schema": "./settings.schema.json",
+  "taskbar": {
+    "mode": "ghost",
+    "dynamicIcon": true,
+    "tempThresholdsC": { "warn": 65, "critical": 80 }
+  },
+  "updates": {
+    "enabled": true,
+    "channel": "stable",
+    "checkIntervalHours": 24,
+    "autoDownload": false
+  },
+  "automation": {
+    "rulesFile": "config/rules.json",
+    "pollSeconds": 3
+  },
+  "energy": {
+    "kwhPrice": 0.85,
+    "currency": "BRL"
+  },
+  "safety": {
+    "confirmKill": true,
+    "protectCritical": true
+  }
+}

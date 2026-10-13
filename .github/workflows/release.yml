@@ -1,0 +1,65 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Versão da tag
+        id: ver
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}'.TrimStart('v')
+          "VERSION=$v" >> $env:GITHUB_OUTPUT
+          $p = $v.Split('.')
+          "MAJOR=$($p[0])" >> $env:GITHUB_OUTPUT
+          "MINOR=$($p[1])" >> $env:GITHUB_OUTPUT
+          "PATCH=$($p[2])" >> $env:GITHUB_OUTPUT
+
+      - name: Build MinSizeRel (MSVC)
+        shell: pwsh
+        run: |
+          $v = '${{ steps.ver.outputs.VERSION }}'.Split('.')
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel `
+            -DAPP_VERSION_MAJOR=$($v[0]) -DAPP_VERSION_MINOR=$($v[1]) -DAPP_VERSION_PATCH=$($v[2])
+          cmake --build build --config MinSizeRel --parallel
+
+      - name: Instalar Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Gerar instalador
+        shell: pwsh
+        run: |
+          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' `
+            installer\NanoTask.iss /DAppVersion=${{ steps.ver.outputs.VERSION }}
+          mkdir dist-portable -ErrorAction SilentlyContinue | Out-Null
+          Copy-Item build\NanoTask.exe dist-portable\
+          Copy-Item -Recurse assets\tray dist-portable\assets\
+          Copy-Item config\settings.defaults.json dist-portable\
+          Compress-Archive -Path dist-portable\* -DestinationPath dist\NanoTask-portable-${{ steps.ver.outputs.VERSION }}.zip -Force
+
+      - name: Notas da release (changelog)
+        shell: pwsh
+        run: |
+          git log --pretty=format:'- %s (%h)' "$(git describe --tags --abbrev=0 HEAD~1)..HEAD" `
+            > dist\CHANGELOG.md 2>$null
+          if (-not (Test-Path dist\CHANGELOG.md)) { 'Release ${{ steps.ver.outputs.VERSION }}' > dist\CHANGELOG.md }
+
+      - name: Publicar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: dist/CHANGELOG.md
+          files: |
+            dist/NanoTask-Setup-*.exe
+            dist/NanoTask-portable-*.zip
