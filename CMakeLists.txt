@@ -17,6 +17,7 @@ if(NOT APP_VERSION_BUILD)
   set(APP_VERSION_BUILD 0)
 endif()
 
+# RC do MSVC: com o ambiente msvc-dev-cmd no CI, ninja usa o rc.exe correto
 add_executable(NanoTask WIN32
     src/main.cpp
     res/version.rc

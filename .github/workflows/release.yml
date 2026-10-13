@@ -15,6 +15,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Ambiente MSVC (cl/rc no PATH)
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Versão da tag
         id: ver
         shell: pwsh

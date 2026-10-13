@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ambiente MSVC (cl/rc no PATH)
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Ler versão
         id: ver
         shell: pwsh
